@@ -21,6 +21,23 @@ const MOVE_COSTS = {
   dunk: 5,
 };
 
+const AUTO_ACCURACY = {
+  dunk: 0.75,
+  layup: 0.85,
+};
+
+const COMBO_FATIGUE = {
+  threshold: 5,
+  perCombo: 0.05,
+  floorDunk: 0.4,
+  floorLayup: 0.5,
+};
+
+const autoAccuracy = (combo, base, floor) => {
+  const fatigue = Math.max(0, combo - COMBO_FATIGUE.threshold) * COMBO_FATIGUE.perCombo;
+  return Math.max(floor, base - fatigue);
+};
+
 const GameScreen = () => {
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const INITIAL_PLAYER = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 };
@@ -158,16 +175,25 @@ const GameScreen = () => {
 
     setGameState('dunking');
 
+    const isSuccessful = isAutoMode
+      ? Math.random() < autoAccuracy(combo, AUTO_ACCURACY.dunk, COMBO_FATIGUE.floorDunk)
+      : true;
+
     const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
     setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
 
     setTimeout(() => {
-      const dunkPoints = 50 + (combo * 10);
-      setScore(prev => prev + dunkPoints);
-      setCombo(prev => prev + 3);
       setGameState('ready');
-      setPlayerPosition(INITIAL_PLAYER);
-      setBallPosition(INITIAL_BALL);
+      if (isSuccessful) {
+        const dunkPoints = 50 + (combo * 10);
+        setScore(prev => prev + dunkPoints);
+        setCombo(prev => prev + 3);
+        setPlayerPosition(INITIAL_PLAYER);
+        setBallPosition(INITIAL_BALL);
+      } else {
+        setCombo(0);
+        setBallPosition({ x: playerPosition.x, y: playerPosition.y - 20 });
+      }
     }, 1300);
   };
 
@@ -180,16 +206,25 @@ const GameScreen = () => {
 
     setGameState('layup');
 
+    const isSuccessful = isAutoMode
+      ? Math.random() < autoAccuracy(combo, AUTO_ACCURACY.layup, COMBO_FATIGUE.floorLayup)
+      : true;
+
     const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
     setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
 
     setTimeout(() => {
-      const layupPoints = 30 + (combo * 5);
-      setScore(prev => prev + layupPoints);
-      setCombo(prev => prev + 2);
       setGameState('ready');
-      setPlayerPosition(INITIAL_PLAYER);
-      setBallPosition(INITIAL_BALL);
+      if (isSuccessful) {
+        const layupPoints = 30 + (combo * 5);
+        setScore(prev => prev + layupPoints);
+        setCombo(prev => prev + 2);
+        setPlayerPosition(INITIAL_PLAYER);
+        setBallPosition(INITIAL_BALL);
+      } else {
+        setCombo(0);
+        setBallPosition({ x: playerPosition.x, y: playerPosition.y - 20 });
+      }
     }, 800);
   };
 
