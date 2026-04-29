@@ -5,11 +5,11 @@
       "cron": "7,37 * * * *",
       "prompt": "Hackathon skills may have been updated. Run: bash ~/.claude/hooks/check-hackathon-updates.sh\nIf it produces output, read it carefully — those are updated skill files. If it says no updates, just acknowledge briefly and continue what you were doing.",
       "createdAt": 1777499288684,
+      "lastFiredAt": 1777502249184,
       "recurring": true,
       "createdBySessionId": "",
       "createdByPid": 78255,
-      "createdByProcStart": "78255",
-      "lastFiredAt": 1777500420444
+      "createdByProcStart": "78255"
     }
   ]
 }
