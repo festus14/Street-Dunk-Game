@@ -30,8 +30,11 @@ const GameScreen = () => {
   const [showStartModal, setShowStartModal] = useState(true);
   const [showEndModal, setShowEndModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [isAutoMode, setIsAutoMode] = useState(false);
 
   const moveIntervalRef = useRef(null);
+  const autoHandlersRef = useRef({});
+  const autoStateRef = useRef({});
 
   const isPlaying = !showStartModal && !showEndModal && timeRemaining > 0;
 
@@ -217,20 +220,80 @@ const GameScreen = () => {
     return () => clearTimeout(comboTimer);
   }, [gameState, combo]);
 
-  const handleDifficultySelect = (seconds) => {
+  const handleDifficultySelect = (seconds, auto = false) => {
     setScore(0);
     setCombo(0);
     setGameState('ready');
     setPlayerPosition(INITIAL_PLAYER);
     setBallPosition(INITIAL_BALL);
     setTimeRemaining(seconds);
+    setIsAutoMode(auto);
     setShowStartModal(false);
   };
 
+  const handleAutoPlay = () => {
+    const random = DIFFICULTIES[Math.floor(Math.random() * DIFFICULTIES.length)];
+    handleDifficultySelect(random.seconds, true);
+  };
+
   const handleRestart = () => {
+    setIsAutoMode(false);
     setShowEndModal(false);
     setShowStartModal(true);
   };
+
+  autoHandlersRef.current = { handleMoveLeft, handleMoveRight, handleDunk, stopMovement };
+  autoStateRef.current = { gameState };
+
+  useEffect(() => {
+    if (!isAutoMode || !isPlaying) return;
+
+    let cancelled = false;
+    let pendingTimeout = null;
+
+    const schedule = (delay) => {
+      if (cancelled) return;
+      pendingTimeout = setTimeout(tick, delay);
+    };
+
+    const tick = () => {
+      if (cancelled) return;
+      const { gameState: gs } = autoStateRef.current;
+      const h = autoHandlersRef.current;
+
+      if (gs === 'dunking' || gs === 'layup' || gs === 'shooting') {
+        schedule(300);
+        return;
+      }
+
+      const action = Math.random();
+      if (action < 0.35) {
+        h.handleMoveLeft();
+        const moveFor = 250 + Math.random() * 400;
+        pendingTimeout = setTimeout(() => {
+          h.stopMovement();
+          schedule(150);
+        }, moveFor);
+      } else if (action < 0.7) {
+        h.handleMoveRight();
+        const moveFor = 250 + Math.random() * 400;
+        pendingTimeout = setTimeout(() => {
+          h.stopMovement();
+          schedule(150);
+        }, moveFor);
+      } else {
+        h.handleDunk();
+        schedule(1500);
+      }
+    };
+
+    schedule(500);
+
+    return () => {
+      cancelled = true;
+      if (pendingTimeout) clearTimeout(pendingTimeout);
+    };
+  }, [isAutoMode, isPlaying]);
 
   return (
     <View style={styles.container}>
@@ -248,6 +311,7 @@ const GameScreen = () => {
         score={score}
         combo={Math.floor(combo)}
         timeRemaining={timeRemaining}
+        isAutoMode={isAutoMode}
       />
       <GameControls
         onMoveLeft={handleMoveLeft}
@@ -283,6 +347,15 @@ const GameScreen = () => {
                 </TouchableOpacity>
               ))}
             </View>
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
+            <TouchableOpacity style={styles.autoButton} onPress={handleAutoPlay}>
+              <Text style={styles.autoButtonText}>AUTO PLAY</Text>
+              <Text style={styles.autoButtonSub}>AI plays a random difficulty</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -364,6 +437,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
     opacity: 0.9,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 14,
+    width: '100%',
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#2E4A8B',
+  },
+  dividerText: {
+    color: '#9FB7E0',
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    marginHorizontal: 10,
+  },
+  autoButton: {
+    backgroundColor: '#8E44AD',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 10,
+    alignItems: 'center',
+    minWidth: 220,
+  },
+  autoButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  autoButtonSub: {
+    color: '#E1D5F0',
+    fontSize: 11,
+    marginTop: 2,
   },
   finalScoreLabel: {
     color: '#9FB7E0',

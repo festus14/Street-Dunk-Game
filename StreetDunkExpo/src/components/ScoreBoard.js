@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const ScoreBoard = ({ score, combo, timeRemaining }) => {
+const ScoreBoard = ({ score, combo, timeRemaining, isAutoMode }) => {
   const formatScore = (score) => {
     const minutes = Math.floor(score / 100);
     const seconds = score % 100;
@@ -33,6 +33,11 @@ const ScoreBoard = ({ score, combo, timeRemaining }) => {
           <Text style={[styles.timerText, lowTime && styles.timerTextLow]}>
             {formatTime(timeRemaining)}
           </Text>
+        </View>
+      )}
+      {isAutoMode && (
+        <View style={styles.autoBadge}>
+          <Text style={styles.autoBadgeText}>AUTO</Text>
         </View>
       )}
     </View>
@@ -113,6 +118,19 @@ const styles = StyleSheet.create({
   },
   timerTextLow: {
     color: '#FF6B6B',
+  },
+  autoBadge: {
+    marginTop: 6,
+    backgroundColor: '#8E44AD',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+  },
+  autoBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 2,
   },
 });
 
