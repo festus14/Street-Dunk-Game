@@ -40,6 +40,7 @@ const GameScreen = () => {
   const [showEndModal, setShowEndModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [movesRemaining, setMovesRemaining] = useState(0);
+  const [startingMoves, setStartingMoves] = useState(0);
   const [isAutoMode, setIsAutoMode] = useState(false);
   const [autoToggle, setAutoToggle] = useState(false);
 
@@ -208,10 +209,17 @@ const GameScreen = () => {
     const hoopX = targetHoop === 'left' ? leftHoopX : rightHoopX;
 
     const distance = Math.min(distanceToLeft, distanceToRight);
-    const baseAccuracy = Math.max(0.5, 1 - (distance / (SCREEN_WIDTH * 0.7)));
-    const comboBonus = Math.min(0.2, combo * 0.03);
-    const finalAccuracy = Math.min(0.85, baseAccuracy + comboBonus);
-    const isSuccessful = Math.random() < finalAccuracy;
+    let isSuccessful;
+    if (isAutoMode) {
+      if (distance < SCREEN_WIDTH * 0.2) isSuccessful = true;
+      else if (distance < SCREEN_WIDTH * 0.4) isSuccessful = combo >= 2;
+      else isSuccessful = combo >= 4 || movesRemaining >= startingMoves * 0.6;
+    } else {
+      const baseAccuracy = Math.max(0.5, 1 - (distance / (SCREEN_WIDTH * 0.7)));
+      const comboBonus = Math.min(0.2, combo * 0.03);
+      const finalAccuracy = Math.min(0.85, baseAccuracy + comboBonus);
+      isSuccessful = Math.random() < finalAccuracy;
+    }
 
     setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
 
@@ -249,10 +257,12 @@ const GameScreen = () => {
     setBallPosition(INITIAL_BALL);
     if (autoToggle) {
       setMovesRemaining(difficulty.moves);
+      setStartingMoves(difficulty.moves);
       setTimeRemaining(0);
     } else {
       setTimeRemaining(difficulty.seconds);
       setMovesRemaining(0);
+      setStartingMoves(0);
     }
     setIsAutoMode(autoToggle);
     setShowStartModal(false);
