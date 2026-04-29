@@ -43,7 +43,7 @@ const GameControls = ({
           onPressIn={onMoveLeft}
           onPressOut={stopMovement}
         >
-          <Text style={styles.moveButtonText}>⬅</Text>
+          <Text style={styles.moveButtonText}>←</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 

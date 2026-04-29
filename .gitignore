@@ -73,3 +73,4 @@ coverage/
 .vscode/
 .idea/
 *.orig
+steps-to-fix.md

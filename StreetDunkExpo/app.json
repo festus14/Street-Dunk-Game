@@ -4,14 +4,6 @@
     "slug": "street-dunk-challenge",
     "version": "1.0.0",
     "orientation": "landscape",
-    "ios": {
-      "supportsTablet": true,
-      "orientation": "landscape"
-    },
-    "android": {
-      "backgroundColor": "#1a1a2e",
-      "orientation": "landscape"
-    },
     "userInterfaceStyle": "light",
     "splash": {
       "resizeMode": "contain",
