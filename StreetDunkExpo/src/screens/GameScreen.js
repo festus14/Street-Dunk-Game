@@ -33,6 +33,7 @@ const GameScreen = () => {
   const [showEndModal, setShowEndModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isAutoMode, setIsAutoMode] = useState(false);
+  const [autoToggle, setAutoToggle] = useState(false);
 
   const moveIntervalRef = useRef(null);
   const autoHandlersRef = useRef({});
@@ -222,20 +223,15 @@ const GameScreen = () => {
     return () => clearTimeout(comboTimer);
   }, [gameState, combo]);
 
-  const handleDifficultySelect = (seconds, auto = false) => {
+  const handleDifficultySelect = (seconds) => {
     setScore(0);
     setCombo(0);
     setGameState('ready');
     setPlayerPosition(INITIAL_PLAYER);
     setBallPosition(INITIAL_BALL);
     setTimeRemaining(seconds);
-    setIsAutoMode(auto);
+    setIsAutoMode(autoToggle);
     setShowStartModal(false);
-  };
-
-  const handleAutoPlay = () => {
-    const random = DIFFICULTIES[Math.floor(Math.random() * DIFFICULTIES.length)];
-    handleDifficultySelect(random.seconds, true);
   };
 
   const handleRestart = () => {
@@ -355,6 +351,16 @@ const GameScreen = () => {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Choose Difficulty</Text>
             <Text style={styles.modalSubtitle}>Score as much as you can</Text>
+            <TouchableOpacity
+              style={[styles.autoToggle, autoToggle && styles.autoToggleOn]}
+              onPress={() => setAutoToggle(prev => !prev)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.autoToggleLabel}>AUTO MODE</Text>
+              <View style={[styles.autoTogglePill, autoToggle && styles.autoTogglePillOn]}>
+                <Text style={styles.autoTogglePillText}>{autoToggle ? 'ON' : 'OFF'}</Text>
+              </View>
+            </TouchableOpacity>
             <View style={styles.difficultyRow}>
               {DIFFICULTIES.map(d => (
                 <TouchableOpacity
@@ -367,15 +373,6 @@ const GameScreen = () => {
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={styles.dividerRow}>
-              <View style={styles.divider} />
-              <Text style={styles.dividerText}>OR</Text>
-              <View style={styles.divider} />
-            </View>
-            <TouchableOpacity style={styles.autoButton} onPress={handleAutoPlay}>
-              <Text style={styles.autoButtonText}>AUTO PLAY</Text>
-              <Text style={styles.autoButtonSub}>AI plays a random difficulty</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -458,42 +455,45 @@ const styles = StyleSheet.create({
     marginTop: 2,
     opacity: 0.9,
   },
-  dividerRow: {
+  autoToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 14,
-    width: '100%',
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#2E4A8B',
-  },
-  dividerText: {
-    color: '#9FB7E0',
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    marginHorizontal: 10,
-  },
-  autoButton: {
-    backgroundColor: '#8E44AD',
-    paddingVertical: 12,
-    paddingHorizontal: 28,
+    justifyContent: 'space-between',
+    backgroundColor: '#0E1A38',
+    borderWidth: 1,
+    borderColor: '#2E4A8B',
     borderRadius: 10,
-    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 14,
     minWidth: 220,
   },
-  autoButtonText: {
+  autoToggleOn: {
+    backgroundColor: '#3A1A5B',
+    borderColor: '#8E44AD',
+  },
+  autoToggleLabel: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: 'bold',
     letterSpacing: 2,
   },
-  autoButtonSub: {
-    color: '#E1D5F0',
-    fontSize: 11,
-    marginTop: 2,
+  autoTogglePill: {
+    backgroundColor: '#2E4A8B',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    minWidth: 48,
+    alignItems: 'center',
+  },
+  autoTogglePillOn: {
+    backgroundColor: '#8E44AD',
+  },
+  autoTogglePillText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   finalScoreLabel: {
     color: '#9FB7E0',
