@@ -14,6 +14,8 @@ const DIFFICULTIES = [
   { label: 'Hard', seconds: 10, color: '#E74C3C' },
 ];
 
+const ACTIONS = ['moveRight', 'moveLeft', 'shoot', 'dunk', 'layup'];
+
 const INITIAL_PLAYER = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 };
 const INITIAL_BALL = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 };
 
@@ -242,7 +244,14 @@ const GameScreen = () => {
     setShowStartModal(true);
   };
 
-  autoHandlersRef.current = { handleMoveLeft, handleMoveRight, handleDunk, stopMovement };
+  autoHandlersRef.current = {
+    handleMoveLeft,
+    handleMoveRight,
+    handleShoot,
+    handleDunk,
+    handleLayup,
+    stopMovement,
+  };
   autoStateRef.current = { gameState };
 
   useEffect(() => {
@@ -256,6 +265,15 @@ const GameScreen = () => {
       pendingTimeout = setTimeout(tick, delay);
     };
 
+    const performMove = (handler) => {
+      handler();
+      const moveFor = 250 + Math.random() * 400;
+      pendingTimeout = setTimeout(() => {
+        autoHandlersRef.current.stopMovement();
+        schedule(150);
+      }, moveFor);
+    };
+
     const tick = () => {
       if (cancelled) return;
       const { gameState: gs } = autoStateRef.current;
@@ -266,24 +284,26 @@ const GameScreen = () => {
         return;
       }
 
-      const action = Math.random();
-      if (action < 0.35) {
-        h.handleMoveLeft();
-        const moveFor = 250 + Math.random() * 400;
-        pendingTimeout = setTimeout(() => {
-          h.stopMovement();
-          schedule(150);
-        }, moveFor);
-      } else if (action < 0.7) {
-        h.handleMoveRight();
-        const moveFor = 250 + Math.random() * 400;
-        pendingTimeout = setTimeout(() => {
-          h.stopMovement();
-          schedule(150);
-        }, moveFor);
-      } else {
-        h.handleDunk();
-        schedule(1500);
+      const actionId = Math.floor(Math.random() * ACTIONS.length);
+      switch (ACTIONS[actionId]) {
+        case 'moveRight':
+          performMove(h.handleMoveRight);
+          break;
+        case 'moveLeft':
+          performMove(h.handleMoveLeft);
+          break;
+        case 'shoot':
+          h.handleShoot();
+          schedule(1300);
+          break;
+        case 'dunk':
+          h.handleDunk();
+          schedule(1600);
+          break;
+        case 'layup':
+          h.handleLayup();
+          schedule(1100);
+          break;
       }
     };
 
