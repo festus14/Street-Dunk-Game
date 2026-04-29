@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Modal, TouchableOpacity } from 'react-native';
 import Court from '../components/Court';
 import Player from '../components/Player';
 import Ball from '../components/Ball';
@@ -8,19 +8,33 @@ import GameControls from '../components/GameControls';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const DIFFICULTIES = [
+  { label: 'Easy', seconds: 60, color: '#27AE60' },
+  { label: 'Medium', seconds: 30, color: '#F39C12' },
+  { label: 'Hard', seconds: 10, color: '#E74C3C' },
+];
+
+const INITIAL_PLAYER = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 };
+const INITIAL_BALL = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 };
+
 const GameScreen = () => {
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
-  const [gameState, setGameState] = useState('ready'); // ready, running, dribbling, dunking, layup, shooting
-  const [playerPosition, setPlayerPosition] = useState({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 });
-  const [ballPosition, setBallPosition] = useState({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 });
+  const [gameState, setGameState] = useState('ready');
+  const [playerPosition, setPlayerPosition] = useState(INITIAL_PLAYER);
+  const [ballPosition, setBallPosition] = useState(INITIAL_BALL);
   const [direction, setDirection] = useState('right');
   const [isMoving, setIsMoving] = useState(null);
-  const [nearHoop, setNearHoop] = useState(null); // 'left', 'right', or null
-  
+  const [nearHoop, setNearHoop] = useState(null);
+
+  const [showStartModal, setShowStartModal] = useState(true);
+  const [showEndModal, setShowEndModal] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+
   const moveIntervalRef = useRef(null);
 
-  // Check if player is near a hoop (updated for new court layout)
+  const isPlaying = !showStartModal && !showEndModal && timeRemaining > 0;
+
   useEffect(() => {
     const leftHoopX = SCREEN_WIDTH * 0.085;
     const rightHoopX = SCREEN_WIDTH * 0.915;
@@ -35,7 +49,6 @@ const GameScreen = () => {
     }
   }, [playerPosition]);
 
-  // Auto-dribble when moving
   useEffect(() => {
     if (isMoving && gameState !== 'dunking' && gameState !== 'layup' && gameState !== 'shooting') {
       setGameState('dribbling');
@@ -44,9 +57,29 @@ const GameScreen = () => {
     }
   }, [isMoving, gameState]);
 
+  useEffect(() => {
+    if (!isPlaying) return;
+    const id = setInterval(() => {
+      setTimeRemaining(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (timeRemaining === 0 && !showStartModal && !showEndModal) {
+      if (moveIntervalRef.current) {
+        clearInterval(moveIntervalRef.current);
+        moveIntervalRef.current = null;
+      }
+      setIsMoving(null);
+      setShowEndModal(true);
+    }
+  }, [timeRemaining, showStartModal, showEndModal]);
+
   const handleMoveLeft = () => {
+    if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
-    
+
     setDirection('left');
     setIsMoving('left');
 
@@ -60,8 +93,9 @@ const GameScreen = () => {
   };
 
   const handleMoveRight = () => {
+    if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
-    
+
     setDirection('right');
     setIsMoving('right');
 
@@ -82,7 +116,6 @@ const GameScreen = () => {
     setIsMoving(null);
   };
 
-  // Stop movement when component unmounts
   useEffect(() => {
     return () => {
       if (moveIntervalRef.current) {
@@ -92,22 +125,22 @@ const GameScreen = () => {
   }, []);
 
   const handleDunk = () => {
+    if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
-    
+
     if (nearHoop) {
       setGameState('dunking');
-      
-      // Move ball to hoop position
+
       const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
       setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
-      
+
       setTimeout(() => {
         const dunkPoints = 50 + (combo * 10);
         setScore(prev => prev + dunkPoints);
         setCombo(prev => prev + 3);
         setGameState('ready');
-        setPlayerPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 });
-        setBallPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 });
+        setPlayerPosition(INITIAL_PLAYER);
+        setBallPosition(INITIAL_BALL);
       }, 1300);
     } else {
       handleShoot();
@@ -115,22 +148,22 @@ const GameScreen = () => {
   };
 
   const handleLayup = () => {
+    if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
-    
+
     if (nearHoop) {
       setGameState('layup');
-      
-      // Move ball to hoop position
+
       const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
       setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
-      
+
       setTimeout(() => {
         const layupPoints = 30 + (combo * 5);
         setScore(prev => prev + layupPoints);
         setCombo(prev => prev + 2);
         setGameState('ready');
-        setPlayerPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 });
-        setBallPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 });
+        setPlayerPosition(INITIAL_PLAYER);
+        setBallPosition(INITIAL_BALL);
       }, 800);
     } else {
       handleShoot();
@@ -138,36 +171,34 @@ const GameScreen = () => {
   };
 
   const handleShoot = () => {
+    if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
-    
+
     setGameState('shooting');
-    
-    // Determine closest hoop
+
     const leftHoopX = SCREEN_WIDTH * 0.085;
     const rightHoopX = SCREEN_WIDTH * 0.915;
     const distanceToLeft = Math.abs(playerPosition.x - leftHoopX);
     const distanceToRight = Math.abs(playerPosition.x - rightHoopX);
     const targetHoop = distanceToLeft < distanceToRight ? 'left' : 'right';
     const hoopX = targetHoop === 'left' ? leftHoopX : rightHoopX;
-    
-    // Calculate shooting accuracy
+
     const distance = Math.min(distanceToLeft, distanceToRight);
     const baseAccuracy = Math.max(0.5, 1 - (distance / (SCREEN_WIDTH * 0.7)));
     const comboBonus = Math.min(0.2, combo * 0.03);
     const finalAccuracy = Math.min(0.85, baseAccuracy + comboBonus);
     const isSuccessful = Math.random() < finalAccuracy;
-    
-    // Animate ball to hoop
+
     setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
-    
+
     setTimeout(() => {
       if (isSuccessful) {
         const isThreePointer = distance > SCREEN_WIDTH * 0.4;
         const shootPoints = isThreePointer ? 30 + (combo * 8) : 20 + (combo * 5);
         setScore(prev => prev + shootPoints);
         setCombo(prev => prev + (isThreePointer ? 2 : 1));
-        setPlayerPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 });
-        setBallPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 });
+        setPlayerPosition(INITIAL_PLAYER);
+        setBallPosition(INITIAL_BALL);
       } else {
         setCombo(0);
         setBallPosition({ x: playerPosition.x, y: playerPosition.y - 20 });
@@ -176,7 +207,6 @@ const GameScreen = () => {
     }, 1000);
   };
 
-  // Reset combo after inactivity
   useEffect(() => {
     let comboTimer;
     if (gameState === 'ready' && combo > 0) {
@@ -187,23 +217,39 @@ const GameScreen = () => {
     return () => clearTimeout(comboTimer);
   }, [gameState, combo]);
 
+  const handleDifficultySelect = (seconds) => {
+    setScore(0);
+    setCombo(0);
+    setGameState('ready');
+    setPlayerPosition(INITIAL_PLAYER);
+    setBallPosition(INITIAL_BALL);
+    setTimeRemaining(seconds);
+    setShowStartModal(false);
+  };
+
+  const handleRestart = () => {
+    setShowEndModal(false);
+    setShowStartModal(true);
+  };
+
   return (
     <View style={styles.container}>
       <Court />
-      <Player 
+      <Player
         position={playerPosition}
         gameState={gameState}
         direction={direction}
       />
-      <Ball 
+      <Ball
         position={ballPosition}
         gameState={gameState}
       />
-      <ScoreBoard 
+      <ScoreBoard
         score={score}
         combo={Math.floor(combo)}
+        timeRemaining={timeRemaining}
       />
-      <GameControls 
+      <GameControls
         onMoveLeft={handleMoveLeft}
         onMoveRight={handleMoveRight}
         onDunk={handleDunk}
@@ -214,6 +260,50 @@ const GameScreen = () => {
         stopMovement={stopMovement}
         nearHoop={nearHoop}
       />
+
+      <Modal
+        visible={showStartModal}
+        transparent
+        animationType="fade"
+        supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Choose Difficulty</Text>
+            <Text style={styles.modalSubtitle}>Score as much as you can</Text>
+            <View style={styles.difficultyRow}>
+              {DIFFICULTIES.map(d => (
+                <TouchableOpacity
+                  key={d.label}
+                  style={[styles.difficultyButton, { backgroundColor: d.color }]}
+                  onPress={() => handleDifficultySelect(d.seconds)}
+                >
+                  <Text style={styles.difficultyLabel}>{d.label}</Text>
+                  <Text style={styles.difficultySeconds}>{d.seconds}s</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showEndModal}
+        transparent
+        animationType="fade"
+        supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Time's Up!</Text>
+            <Text style={styles.finalScoreLabel}>FINAL SCORE</Text>
+            <Text style={styles.finalScoreValue}>{score}</Text>
+            <TouchableOpacity style={styles.playAgainButton} onPress={handleRestart}>
+              <Text style={styles.playAgainText}>Play Again</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -222,6 +312,85 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#E6F3FF',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#2E4A8B',
+    minWidth: 320,
+    maxWidth: 480,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    letterSpacing: 1,
+  },
+  modalSubtitle: {
+    color: '#9FB7E0',
+    fontSize: 13,
+    marginBottom: 18,
+  },
+  difficultyRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  difficultyButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    minWidth: 90,
+  },
+  difficultyLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  difficultySeconds: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    marginTop: 2,
+    opacity: 0.9,
+  },
+  finalScoreLabel: {
+    color: '#9FB7E0',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    marginTop: 8,
+  },
+  finalScoreValue: {
+    color: '#00FF00',
+    fontSize: 56,
+    fontWeight: 'bold',
+    fontFamily: 'monospace',
+    marginTop: 4,
+    marginBottom: 18,
+  },
+  playAgainButton: {
+    backgroundColor: '#3498DB',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+  },
+  playAgainText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
 });
 
