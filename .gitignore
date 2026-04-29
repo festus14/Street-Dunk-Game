@@ -69,6 +69,12 @@ logs
 coverage/
 .nyc_output/
 
+# Claude Code local state
+.claude/                                                                                                    
+                                                            
+# TypeScript build info                                                                                     
+*.tsbuildinfo                                                                                               
+
 # Misc
 .vscode/
 .idea/
