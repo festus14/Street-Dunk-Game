@@ -106,9 +106,8 @@ const GameScreen = () => {
         setScore(prev => prev + dunkPoints);
         setCombo(prev => prev + 3);
         setGameState('ready');
-        
-        // Reset ball position
-        setBallPosition({ x: playerPosition.x, y: playerPosition.y - 20 });
+        setPlayerPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 });
+        setBallPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 });
       }, 1300);
     } else {
       handleShoot();
@@ -130,9 +129,8 @@ const GameScreen = () => {
         setScore(prev => prev + layupPoints);
         setCombo(prev => prev + 2);
         setGameState('ready');
-        
-        // Reset ball position
-        setBallPosition({ x: playerPosition.x, y: playerPosition.y - 20 });
+        setPlayerPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 });
+        setBallPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 });
       }, 800);
     } else {
       handleShoot();
@@ -168,14 +166,13 @@ const GameScreen = () => {
         const shootPoints = isThreePointer ? 30 + (combo * 8) : 20 + (combo * 5);
         setScore(prev => prev + shootPoints);
         setCombo(prev => prev + (isThreePointer ? 2 : 1));
+        setPlayerPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 });
+        setBallPosition({ x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 });
       } else {
-        // Miss - reset combo
         setCombo(0);
+        setBallPosition({ x: playerPosition.x, y: playerPosition.y - 20 });
       }
       setGameState('ready');
-      
-      // Reset ball position
-      setBallPosition({ x: playerPosition.x, y: playerPosition.y - 20 });
     }, 1000);
   };
 
