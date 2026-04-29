@@ -43,7 +43,7 @@ const GameControls = ({
           onPressIn={onMoveLeft}
           onPressOut={stopMovement}
         >
-          <Text style={styles.moveButtonText}>←</Text>
+          <Text style={styles.moveButtonText}>◀</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -54,7 +54,7 @@ const GameControls = ({
           onPressIn={onMoveRight}
           onPressOut={stopMovement}
         >
-          <Text style={styles.moveButtonText}>➡</Text>
+          <Text style={styles.moveButtonText}>▶</Text>
         </TouchableOpacity>
       </View>
       
@@ -69,7 +69,7 @@ const GameControls = ({
           onLongPress={handleDunkLongPress}
           delayLongPress={500}
         >
-          <Text style={styles.actionButtonText}>⬆</Text>
+          <Text style={styles.actionButtonText}>▲</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -129,14 +129,20 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.05 }],
   },
   moveButtonText: {
-    fontSize: 28,
+    fontSize: 26,
     color: '#FFFFFF',
     fontWeight: 'bold',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   actionButtonText: {
-    fontSize: 32,
+    fontSize: 30,
     color: '#FFFFFF',
     fontWeight: 'bold',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
 });
 
