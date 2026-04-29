@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const ScoreBoard = ({ score, combo, timeRemaining, isAutoMode }) => {
+const ScoreBoard = ({ score, combo, timeRemaining, movesRemaining, isAutoMode }) => {
   const formatScore = (score) => {
     const minutes = Math.floor(score / 100);
     const seconds = score % 100;
@@ -16,7 +16,10 @@ const ScoreBoard = ({ score, combo, timeRemaining, isAutoMode }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const lowTime = timeRemaining > 0 && timeRemaining <= 5;
+  const showTime = !isAutoMode && timeRemaining > 0;
+  const showMoves = isAutoMode && movesRemaining > 0;
+  const lowTime = showTime && timeRemaining <= 5;
+  const lowMoves = showMoves && movesRemaining <= 5;
 
   return (
     <View style={styles.container} pointerEvents="none">
@@ -27,11 +30,19 @@ const ScoreBoard = ({ score, combo, timeRemaining, isAutoMode }) => {
           <Text style={styles.comboText}>x{combo} COMBO</Text>
         )}
       </View>
-      {timeRemaining > 0 && (
+      {showTime && (
         <View style={[styles.timerBox, lowTime && styles.timerBoxLow]}>
           <Text style={styles.timerLabel}>TIME</Text>
           <Text style={[styles.timerText, lowTime && styles.timerTextLow]}>
             {formatTime(timeRemaining)}
+          </Text>
+        </View>
+      )}
+      {showMoves && (
+        <View style={[styles.timerBox, lowMoves && styles.timerBoxLow]}>
+          <Text style={styles.timerLabel}>MOVES</Text>
+          <Text style={[styles.timerText, lowMoves && styles.timerTextLow]}>
+            {movesRemaining}
           </Text>
         </View>
       )}

@@ -9,12 +9,19 @@ import GameControls from '../components/GameControls';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const DIFFICULTIES = [
-  { label: 'Easy', seconds: 60, color: '#27AE60' },
-  { label: 'Medium', seconds: 30, color: '#F39C12' },
-  { label: 'Hard', seconds: 10, color: '#E74C3C' },
+  { label: 'Easy', seconds: 60, moves: 50, color: '#27AE60' },
+  { label: 'Medium', seconds: 30, moves: 30, color: '#F39C12' },
+  { label: 'Hard', seconds: 10, moves: 20, color: '#E74C3C' },
 ];
 
 const ACTIONS = ['moveRight', 'moveLeft', 'shoot', 'dunk', 'layup'];
+
+const MOVE_COSTS = {
+  move: 1,
+  shoot: 1,
+  layup: 3,
+  dunk: 5,
+};
 
 const INITIAL_PLAYER = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 };
 const INITIAL_BALL = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 };
@@ -32,6 +39,7 @@ const GameScreen = () => {
   const [showStartModal, setShowStartModal] = useState(true);
   const [showEndModal, setShowEndModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [movesRemaining, setMovesRemaining] = useState(0);
   const [isAutoMode, setIsAutoMode] = useState(false);
   const [autoToggle, setAutoToggle] = useState(false);
 
@@ -39,7 +47,14 @@ const GameScreen = () => {
   const autoHandlersRef = useRef({});
   const autoStateRef = useRef({});
 
-  const isPlaying = !showStartModal && !showEndModal && timeRemaining > 0;
+  const isPlaying = !showStartModal && !showEndModal && (
+    isAutoMode ? movesRemaining > 0 : timeRemaining > 0
+  );
+
+  const deductMoves = (cost) => {
+    if (!isAutoMode) return;
+    setMovesRemaining(prev => Math.max(0, prev - cost));
+  };
 
   useEffect(() => {
     const leftHoopX = SCREEN_WIDTH * 0.085;
@@ -64,15 +79,17 @@ const GameScreen = () => {
   }, [isMoving, gameState]);
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || isAutoMode) return;
     const id = setInterval(() => {
       setTimeRemaining(prev => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(id);
-  }, [isPlaying]);
+  }, [isPlaying, isAutoMode]);
 
   useEffect(() => {
-    if (timeRemaining === 0 && !showStartModal && !showEndModal) {
+    if (showStartModal || showEndModal) return;
+    const gameOver = isAutoMode ? movesRemaining <= 0 : timeRemaining === 0;
+    if (gameOver) {
       if (moveIntervalRef.current) {
         clearInterval(moveIntervalRef.current);
         moveIntervalRef.current = null;
@@ -80,12 +97,13 @@ const GameScreen = () => {
       setIsMoving(null);
       setShowEndModal(true);
     }
-  }, [timeRemaining, showStartModal, showEndModal]);
+  }, [timeRemaining, movesRemaining, showStartModal, showEndModal, isAutoMode]);
 
   const handleMoveLeft = () => {
     if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
 
+    deductMoves(MOVE_COSTS.move);
     setDirection('left');
     setIsMoving('left');
 
@@ -102,6 +120,7 @@ const GameScreen = () => {
     if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
 
+    deductMoves(MOVE_COSTS.move);
     setDirection('right');
     setIsMoving('right');
 
@@ -134,52 +153,51 @@ const GameScreen = () => {
     if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
 
-    if (nearHoop) {
-      setGameState('dunking');
+    deductMoves(MOVE_COSTS.dunk);
+    if (!nearHoop) return;
 
-      const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
-      setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
+    setGameState('dunking');
 
-      setTimeout(() => {
-        const dunkPoints = 50 + (combo * 10);
-        setScore(prev => prev + dunkPoints);
-        setCombo(prev => prev + 3);
-        setGameState('ready');
-        setPlayerPosition(INITIAL_PLAYER);
-        setBallPosition(INITIAL_BALL);
-      }, 1300);
-    } else {
-      handleShoot();
-    }
+    const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
+    setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
+
+    setTimeout(() => {
+      const dunkPoints = 50 + (combo * 10);
+      setScore(prev => prev + dunkPoints);
+      setCombo(prev => prev + 3);
+      setGameState('ready');
+      setPlayerPosition(INITIAL_PLAYER);
+      setBallPosition(INITIAL_BALL);
+    }, 1300);
   };
 
   const handleLayup = () => {
     if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
 
-    if (nearHoop) {
-      setGameState('layup');
+    deductMoves(MOVE_COSTS.layup);
+    if (!nearHoop) return;
 
-      const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
-      setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
+    setGameState('layup');
 
-      setTimeout(() => {
-        const layupPoints = 30 + (combo * 5);
-        setScore(prev => prev + layupPoints);
-        setCombo(prev => prev + 2);
-        setGameState('ready');
-        setPlayerPosition(INITIAL_PLAYER);
-        setBallPosition(INITIAL_BALL);
-      }, 800);
-    } else {
-      handleShoot();
-    }
+    const hoopX = nearHoop === 'left' ? SCREEN_WIDTH * 0.085 : SCREEN_WIDTH * 0.915;
+    setBallPosition({ x: hoopX, y: SCREEN_HEIGHT * 0.22 });
+
+    setTimeout(() => {
+      const layupPoints = 30 + (combo * 5);
+      setScore(prev => prev + layupPoints);
+      setCombo(prev => prev + 2);
+      setGameState('ready');
+      setPlayerPosition(INITIAL_PLAYER);
+      setBallPosition(INITIAL_BALL);
+    }, 800);
   };
 
   const handleShoot = () => {
     if (!isPlaying) return;
     if (gameState === 'dunking' || gameState === 'layup' || gameState === 'shooting') return;
 
+    deductMoves(MOVE_COSTS.shoot);
     setGameState('shooting');
 
     const leftHoopX = SCREEN_WIDTH * 0.085;
@@ -223,13 +241,19 @@ const GameScreen = () => {
     return () => clearTimeout(comboTimer);
   }, [gameState, combo]);
 
-  const handleDifficultySelect = (seconds) => {
+  const handleDifficultySelect = (difficulty) => {
     setScore(0);
     setCombo(0);
     setGameState('ready');
     setPlayerPosition(INITIAL_PLAYER);
     setBallPosition(INITIAL_BALL);
-    setTimeRemaining(seconds);
+    if (autoToggle) {
+      setMovesRemaining(difficulty.moves);
+      setTimeRemaining(0);
+    } else {
+      setTimeRemaining(difficulty.seconds);
+      setMovesRemaining(0);
+    }
     setIsAutoMode(autoToggle);
     setShowStartModal(false);
   };
@@ -327,6 +351,7 @@ const GameScreen = () => {
         score={score}
         combo={Math.floor(combo)}
         timeRemaining={timeRemaining}
+        movesRemaining={movesRemaining}
         isAutoMode={isAutoMode}
       />
       <GameControls
@@ -366,10 +391,12 @@ const GameScreen = () => {
                 <TouchableOpacity
                   key={d.label}
                   style={[styles.difficultyButton, { backgroundColor: d.color }]}
-                  onPress={() => handleDifficultySelect(d.seconds)}
+                  onPress={() => handleDifficultySelect(d)}
                 >
                   <Text style={styles.difficultyLabel}>{d.label}</Text>
-                  <Text style={styles.difficultySeconds}>{d.seconds}s</Text>
+                  <Text style={styles.difficultySeconds}>
+                    {autoToggle ? `${d.moves} moves` : `${d.seconds}s`}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
