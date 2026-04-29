@@ -1,9 +1,7 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const GameControls = ({ 
+const GameControls = ({
   onMoveLeft, 
   onMoveRight, 
   onDunk, 

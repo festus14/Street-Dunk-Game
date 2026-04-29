@@ -1,10 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Animated, Dimensions } from 'react-native';
+import { StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 const Ball = ({ position, gameState }) => {
+  const { height: SCREEN_HEIGHT } = useWindowDimensions();
   const ballAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const spinAnim = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;

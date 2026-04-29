@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, Modal, TouchableOpacity } from 'react-native';
 import Court from '../components/Court';
 import Player from '../components/Player';
 import Ball from '../components/Ball';
 import ScoreBoard from '../components/ScoreBoard';
 import GameControls from '../components/GameControls';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const DIFFICULTIES = [
   { label: 'Easy', seconds: 60, moves: 50, color: '#27AE60' },
@@ -23,10 +21,11 @@ const MOVE_COSTS = {
   dunk: 5,
 };
 
-const INITIAL_PLAYER = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 };
-const INITIAL_BALL = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 };
-
 const GameScreen = () => {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const INITIAL_PLAYER = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.8 };
+  const INITIAL_BALL = { x: SCREEN_WIDTH / 2, y: SCREEN_HEIGHT * 0.75 };
+
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [gameState, setGameState] = useState('ready');
@@ -69,7 +68,7 @@ const GameScreen = () => {
     } else {
       setNearHoop(null);
     }
-  }, [playerPosition]);
+  }, [playerPosition, SCREEN_WIDTH]);
 
   useEffect(() => {
     if (isMoving && gameState !== 'dunking' && gameState !== 'layup' && gameState !== 'shooting') {

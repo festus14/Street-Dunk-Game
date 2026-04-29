@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 
 const ScoreBoard = ({ score, combo, timeRemaining, movesRemaining, isAutoMode }) => {
+  const { height: SCREEN_HEIGHT } = useWindowDimensions();
   const formatScore = (score) => {
     const minutes = Math.floor(score / 100);
     const seconds = score % 100;
@@ -22,7 +21,7 @@ const ScoreBoard = ({ score, combo, timeRemaining, movesRemaining, isAutoMode })
   const lowMoves = showMoves && movesRemaining <= 5;
 
   return (
-    <View style={styles.container} pointerEvents="none">
+    <View style={[styles.container, { top: SCREEN_HEIGHT * 0.02 }]} pointerEvents="none">
       <View style={styles.scoreBoard}>
         <Text style={styles.label}>SCORE</Text>
         <Text style={styles.scoreText}>{formatScore(score)}</Text>
@@ -58,7 +57,6 @@ const ScoreBoard = ({ score, combo, timeRemaining, movesRemaining, isAutoMode })
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: SCREEN_HEIGHT * 0.02,
     left: 0,
     right: 0,
     zIndex: 5,

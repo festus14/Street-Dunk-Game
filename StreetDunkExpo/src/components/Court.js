@@ -1,9 +1,8 @@
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Rect, Circle, Line, Path, Defs, LinearGradient, Stop, Ellipse } from 'react-native-svg';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 const Court = () => {
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   return (
     <View style={styles.container}>
       <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={styles.court}>
